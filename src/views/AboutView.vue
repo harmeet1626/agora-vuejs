@@ -8,8 +8,8 @@
         <button @click="() => leaveAndRemoveLocalStream()" id="leave-btn">
           Leave Stream
         </button>
-        <button @click="() => toggleMic()" id="mic-btn">Mic On</button>
-        <button @click="() => toggleCamera()" id="camera-btn">Camera on</button>
+        <button @click="toggleMic()" id="mic-btn">Toggle Mic</button>
+        <button @click="toggleCamera()" id="camera-btn">Toggle Camera</button>
       </div>
       <button @click="test">Test</button>
     </div>
@@ -22,7 +22,7 @@ export default {
     return {
       APP_ID: "6ff63c5227f04291a78decac94cae905",
       TOKEN:
-        "007eJxTYLDa9yfvyIFC+SO25bkNk0OWN7E3LU7MOlP5p8rm0Tqvld8VGMzS0syMk02NjMzTDEyMLA0TzS1SUpMTky1NkhNTLQ1M1YsVUxoCGRmmtn5hYWSAQBCfg8E5I7FEIbGggIEBAFQPIk4=",
+        "007eJxTYCjdPPm9q/6kd44m8Xlrzuo1JWq9PuD5bNXtgmJWp6i150UVGMzS0syMk02NjMzTDEyMLA0TzS1SUpMTky1NkhNTLQ1My04ppTQEMjLcjzVmYWSAQBCfg8E5I7FEIbGggIEBAPr8IQs=",
       CHANNEL: "Chat app",
       client: AgoraRTC.createClient({ mode: "rtc", codec: "vp8" }),
       localTracks: [],
@@ -38,15 +38,24 @@ export default {
       null
     );
   },
+  watch: {},
+  computed: {
+    class1() {
+      return `user-container-${this.UID}`;
+    },
+    class2() {
+      return `user-${this.UID}`;
+    },
+  },
   methods: {
     test() {
-      console.log(this.client)
+      console.log(this.UID);
     },
     async joinAndDisplayLocalStream() {
-      // this.client.on("user-published", this.handleUserJoined);
-      // this.client.on("user-left", this.handleUserLeft);
-
+      this.client.on("user-published", this.handleUserJoined());
+      this.client.on("user-left", this.handleUserLeft());
       this.localTracks = await AgoraRTC.createMicrophoneAndCameraTracks();
+      console.log("working", this.UID);
       let player = `<div class="video-container" id="user-container-${this.UID}">
                     <div class="video-player" id="user-${this.UID}"></div>
                     </div>`;
@@ -58,11 +67,10 @@ export default {
     },
     async joinStream() {
       await this.joinAndDisplayLocalStream();
-      document.getElementById("join-btn").style.display = "none";
-      document.getElementById("stream-controls").style.display = "flex";
     },
     async handleUserJoined(user, mediaType) {
-      this.remoteUsers[user.uid] = user;
+      console.log(user, "test");
+      // this.remoteUsers[user.uid] = user;
       await this.client.subscribe(user, mediaType);
 
       if (mediaType === "video") {
@@ -84,8 +92,8 @@ export default {
       }
     },
     async handleUserLeft(user) {
-      delete this.remoteUsers[user.uid];
-      document.getElementById(`user-container-${user.uid}`).remove();
+      // delete this.remoteUsers[user.uid];
+      // document.getElementById(`user-container-${user.uid}`).remove();
     },
     async leaveAndRemoveLocalStream() {
       for (let i = 0; this.localTracks.length > i; i++) {
@@ -94,26 +102,18 @@ export default {
       }
       await this.client.leave();
     },
-    async toggleMic(e) {
+    async toggleMic() {
       if (this.localTracks[0].muted) {
         await this.localTracks[0].setMuted(false);
-        e.target.innerText = "Mic on";
-        e.target.style.backgroundColor = "cadetblue";
       } else {
         await this.localTracks[0].setMuted(true);
-        e.target.innerText = "Mic off";
-        e.target.style.backgroundColor = "#EE4B2B";
       }
     },
-    async toggleCamera(e) {
+    async toggleCamera() {
       if (this.localTracks[1].muted) {
         await this.localTracks[1].setMuted(false);
-        e.target.innerText = "Camera on";
-        e.target.style.backgroundColor = "cadetblue";
       } else {
         await this.localTracks[1].setMuted(true);
-        e.target.innerText = "Camera off";
-        e.target.style.backgroundColor = "#EE4B2B";
       }
     },
   },
